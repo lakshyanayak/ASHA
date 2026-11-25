@@ -1,6 +1,6 @@
 
 import { useState } from 'react'
-import './AskAsha.css'
+import "./AskAsha.css";
 
 const API_URL = 'http://127.0.0.1:8000'
 
