@@ -1,4 +1,6 @@
 
+import { useEffect, useState } from "react";
+
 import {
   Activity,
   Moon,
@@ -23,20 +25,61 @@ import {
 import MetricCard from "../components/MetricCard";
 import InsightCard from "../components/InsightCard";
 
-const wellnessData = [
-  { day: "Mon", activity: 45, mood: 65 },
-  { day: "Tue", activity: 65, mood: 72 },
-  { day: "Wed", activity: 55, mood: 60 },
-  { day: "Thu", activity: 78, mood: 80 },
-  { day: "Fri", activity: 60, mood: 75 },
-  { day: "Sat", activity: 88, mood: 85 },
-  { day: "Sun", activity: 72, mood: 90 }
-];
+import { getWellnessDashboard } from "../services/api";
 
 export default function Dashboard() {
+
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // Fetch actual wellness data from the FastAPI backend.
+  useEffect(() => {
+
+    const fetchData = async () => {
+      try {
+        const data = await getWellnessDashboard();
+        setDashboardData(data);
+      } catch (err) {
+        console.error("Dashboard data error:", err);
+        setError("Unable to load wellness data. Please check the backend.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+
+  }, []);
+
+  if (loading) {
+    return <div className="dashboard-page">Loading your wellness data...</div>;
+  }
+
+  if (error) {
+    return <div className="dashboard-page">{error}</div>;
+  }
+
+  if (!dashboardData || !dashboardData.latest) {
+    return <div className="dashboard-page">No wellness data available.</div>;
+  }
+
+  // Data received from the backend.
+  const latest = dashboardData.latest;
+  const baseline = dashboardData.baseline;
+  const records = dashboardData.records;
+
+  // Prepare records for the weekly chart.
+  const wellnessData = records.map((record) => ({
+    day: record.date.slice(5),
+    activity: record.steps,
+    mood: record.mood
+  }));
+
   return (
     <div className="dashboard-page">
 
+      {/* Welcome section */}
       <section className="welcome-banner">
         <div>
           <span className="banner-label">
@@ -56,45 +99,49 @@ export default function Dashboard() {
         </div>
       </section>
 
+      {/* Daily overview */}
       <div className="section-heading">
         <div>
           <h2>Your daily overview</h2>
-          <p>A snapshot of your wellness journey</p>
+          <p>
+            Your latest recorded wellness information
+          </p>
         </div>
 
         <span className="date-label">
-          <Clock size={15} /> Today's overview
+          <Clock size={15} /> {latest.date}
         </span>
       </div>
 
+      {/* Actual wellness metrics */}
       <section className="metrics-grid">
 
         <MetricCard
           title="Sleep"
-          value="7.5"
+          value={latest.sleep.toFixed(1)}
           unit="hrs"
-          description="Rest and recharge"
+          description={`Average: ${baseline.sleep.toFixed(1)} hrs`}
           icon={Moon}
           color="purple"
-          trend="up"
-          trendLabel="Sample data"
+          trend="neutral"
+          trendLabel="Latest recorded"
         />
 
         <MetricCard
           title="Activity"
-          value="6,240"
+          value={latest.steps.toLocaleString("en-IN")}
           unit="steps"
-          description="Daily movement"
+          description={`Average: ${Math.round(baseline.steps).toLocaleString("en-IN")} steps`}
           icon={Footprints}
           color="green"
-          trend="up"
-          trendLabel="Sample data"
+          trend="neutral"
+          trendLabel="Latest recorded"
         />
 
         <MetricCard
           title="Mood"
-          value="Good"
-          description="Daily check-in"
+          value={`${latest.mood}/10`}
+          description={`Average: ${baseline.mood.toFixed(1)}/10`}
           icon={Smile}
           color="orange"
           trend="neutral"
@@ -102,18 +149,18 @@ export default function Dashboard() {
         />
 
         <MetricCard
-          title="Wellness"
-          value="78"
-          unit="/100"
-          description="Illustrative indicator"
+          title="Energy"
+          value={`${latest.energy}/10`}
+          description={`Average: ${baseline.energy.toFixed(1)}/10`}
           icon={Activity}
           color="blue"
           trend="neutral"
-          trendLabel="Demo score"
+          trendLabel="Self-reported"
         />
 
       </section>
 
+      {/* Weekly wellness chart */}
       <section className="chart-section">
 
         <div className="chart-heading">
@@ -122,30 +169,69 @@ export default function Dashboard() {
             <p>Explore your activity and mood trends</p>
           </div>
 
-          <span className="chart-period">Last 7 days</span>
+          <span className="chart-period">
+            {records.length} recorded days
+          </span>
         </div>
 
         <div className="chart-legend">
-          <span><i className="legend-dot activity-dot"></i> Activity</span>
-          <span><i className="legend-dot mood-dot"></i> Mood</span>
+          <span>
+            <i className="legend-dot activity-dot"></i> Activity
+          </span>
+
+          <span>
+            <i className="legend-dot mood-dot"></i> Mood
+          </span>
         </div>
 
         <div className="wellness-chart">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={wellnessData}>
+
               <defs>
-                <linearGradient id="activityGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#547B62" stopOpacity={0.25} />
-                  <stop offset="100%" stopColor="#547B62" stopOpacity={0.02} />
+                <linearGradient
+                  id="activityGradient"
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                >
+                  <stop
+                    offset="0%"
+                    stopColor="#547B62"
+                    stopOpacity={0.25}
+                  />
+                  <stop
+                    offset="100%"
+                    stopColor="#547B62"
+                    stopOpacity={0.02}
+                  />
                 </linearGradient>
 
-                <linearGradient id="moodGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#9A82D5" stopOpacity={0.22} />
-                  <stop offset="100%" stopColor="#9A82D5" stopOpacity={0.02} />
+                <linearGradient
+                  id="moodGradient"
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                >
+                  <stop
+                    offset="0%"
+                    stopColor="#9A82D5"
+                    stopOpacity={0.22}
+                  />
+                  <stop
+                    offset="100%"
+                    stopColor="#9A82D5"
+                    stopOpacity={0.02}
+                  />
                 </linearGradient>
               </defs>
 
-              <CartesianGrid strokeDasharray="3 3" stroke="#EAECE7" />
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="#EAECE7"
+              />
 
               <XAxis
                 dataKey="day"
@@ -154,8 +240,20 @@ export default function Dashboard() {
                 tick={{ fill: "#858C83", fontSize: 12 }}
               />
 
+              {/* Left axis: steps */}
               <YAxis
-                domain={[0, 100]}
+                yAxisId="steps"
+                domain={[0, "auto"]}
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: "#858C83", fontSize: 12 }}
+              />
+
+              {/* Right axis: mood out of 10 */}
+              <YAxis
+                yAxisId="mood"
+                orientation="right"
+                domain={[0, 10]}
                 axisLine={false}
                 tickLine={false}
                 tick={{ fill: "#858C83", fontSize: 12 }}
@@ -164,33 +262,36 @@ export default function Dashboard() {
               <Tooltip />
 
               <Area
+                yAxisId="steps"
                 type="monotone"
                 dataKey="activity"
-                name="Activity"
+                name="Activity (steps)"
                 stroke="#547B62"
                 strokeWidth={3}
                 fill="url(#activityGradient)"
               />
 
               <Area
+                yAxisId="mood"
                 type="monotone"
                 dataKey="mood"
-                name="Mood"
+                name="Mood (out of 10)"
                 stroke="#9A82D5"
                 strokeWidth={3}
                 fill="url(#moodGradient)"
               />
+
             </AreaChart>
           </ResponsiveContainer>
         </div>
 
         <p className="chart-note">
-          Demonstration data – actual wellness trends will be
-          connected to ASHA's backend.
+          Based on your recorded wellness data.
         </p>
 
       </section>
 
+      {/* Gentle reminders */}
       <section className="insights-section">
 
         <div className="section-heading">
