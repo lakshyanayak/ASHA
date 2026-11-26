@@ -1,8 +1,7 @@
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.api.routes import router as asha_router
+from backend.api.routes import router
 
 
 # ==========================================
@@ -35,10 +34,10 @@ app.add_middleware(
 
 
 # ==========================================
-# REGISTER ASHA API ROUTES
+# REGISTER API ROUTES
 # ==========================================
 
-app.include_router(asha_router)
+app.include_router(router)
 
 
 # ==========================================
