@@ -1,0 +1,182 @@
+
+.asha-page {
+  min-height: 100vh;
+  padding: 35px 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f2f6f9;
+  font-family: Arial, sans-serif;
+  box-sizing: border-box;
+}
+
+.asha-card {
+  width: 100%;
+  max-width: 750px;
+  height: 650px;
+  background: white;
+  border-radius: 18px;
+  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.asha-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px;
+  border-bottom: 1px solid #e8edf2;
+}
+
+.asha-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #287d83;
+  color: white;
+  display: grid;
+  place-items: center;
+  font-size: 23px;
+  font-weight: bold;
+}
+
+.asha-header h1 {
+  margin: 0;
+  font-size: 22px;
+  color: #20343b;
+}
+
+.asha-header p {
+  margin: 5px 0 0;
+  color: #71818a;
+  font-size: 13px;
+}
+
+.asha-status {
+  margin-left: auto;
+  color: #16865d;
+  font-size: 13px;
+}
+
+.asha-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.message {
+  max-width: 78%;
+  padding: 13px 16px;
+  border-radius: 13px;
+}
+
+.message.asha {
+  background: #edf5f4;
+  align-self: flex-start;
+}
+
+.message.user {
+  background: #287d83;
+  color: white;
+  align-self: flex-end;
+}
+
+.message-name {
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.message p {
+  margin: 7px 0 0;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.asha-error {
+  padding: 12px;
+  background: #fff0f0;
+  color: #b42318;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.asha-audio {
+  padding: 12px 20px;
+  border-top: 1px solid #e8edf2;
+}
+
+.asha-audio p {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: #465b62;
+}
+
+.asha-audio audio {
+  width: 100%;
+}
+
+.asha-input-area {
+  display: flex;
+  gap: 10px;
+  padding: 18px;
+  border-top: 1px solid #e8edf2;
+}
+
+.asha-input-area input {
+  flex: 1;
+  min-width: 0;
+  padding: 13px;
+  border: 1px solid #d5dfe3;
+  border-radius: 9px;
+  font-size: 14px;
+  outline: none;
+}
+
+.asha-input-area input:focus {
+  border-color: #287d83;
+}
+
+.asha-input-area button {
+  border: none;
+  border-radius: 9px;
+  padding: 0 23px;
+  background: #287d83;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.asha-input-area button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.asha-footer {
+  text-align: center;
+  color: #849198;
+  font-size: 11px;
+  padding: 0 12px 14px;
+}
+
+@media (max-width: 600px) {
+  .asha-card {
+    height: 85vh;
+  }
+
+  .message {
+    max-width: 90%;
+  }
+
+  .asha-input-area {
+    padding: 12px;
+  }
+
+  .asha-input-area button {
+    padding: 0 15px;
+  }
+}

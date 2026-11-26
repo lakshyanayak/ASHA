@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { useLocation, useNavigate, Routes, Route } from "react-router-dom";
 
 import Sidebar from "./components/Sidebar";
@@ -7,7 +6,7 @@ import Header from "./components/Header";
 
 import Dashboard from "./pages/Dashboard";
 import Patterns from "./pages/Patterns";
-import AskAsha from "./pages/AskAsha";
+import AskAsha from "./AskAsha";
 import Progress from "./pages/Progress";
 
 const pageDetails = {
@@ -33,7 +32,8 @@ export default function App() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const currentPage = pageDetails[location.pathname] || pageDetails["/"];
+  const currentPage =
+    pageDetails[location.pathname] || pageDetails["/"];
 
   return (
     <div className="app-layout">
@@ -60,4 +60,3 @@ export default function App() {
     </div>
   );
 }
-
