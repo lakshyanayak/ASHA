@@ -69,6 +69,9 @@ export default function Dashboard() {
   const baseline = dashboardData.baseline;
   const records = dashboardData.records;
 
+  // Get today's date in the user's local timezone.
+  const today = new Date().toLocaleDateString("en-CA");
+
   // Prepare records for the weekly chart.
   const wellnessData = records.map((record) => ({
     day: record.date.slice(5),
@@ -109,7 +112,7 @@ export default function Dashboard() {
         </div>
 
         <span className="date-label">
-          <Clock size={15} /> {latest.date}
+          <Clock size={15} /> {today}
         </span>
       </div>
 

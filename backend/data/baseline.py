@@ -64,3 +64,74 @@ def detect_deviations(current_data, baseline):
             }
 
     return deviations
+
+def generate_wellness_recommendations(current_data, baseline):
+    """
+    Generates gentle, personalized wellness suggestions
+    by comparing current data with personal averages.
+    """
+
+    recommendations = []
+
+    # Sleep recommendation
+    if current_data.sleep < baseline["sleep"] * 0.8:
+        recommendations.append({
+            "metric": "sleep",
+            "title": "Give yourself some rest",
+            "message": (
+                "I noticed you slept less than your usual pattern. "
+                "Try winding down a little earlier tonight and "
+                "maintaining a consistent sleep routine. "
+                "You deserve some good rest!"
+            )
+        })
+
+    # Water recommendation
+    if current_data.water < baseline["water"] * 0.8:
+        recommendations.append({
+            "metric": "water",
+            "title": "Remember to stay hydrated",
+            "message": (
+                "Your water intake is lower than your usual level. "
+                "Try keeping water nearby and drinking regularly "
+                "throughout the day. Take care of yourself!"
+            )
+        })
+
+    # Screen time recommendation
+    if current_data.screen_time > baseline["screen_time"] * 1.2:
+        recommendations.append({
+            "metric": "screen_time",
+            "title": "Take a little screen break",
+            "message": (
+                "Your screen time is higher than your usual pattern. "
+                "Consider taking a few short breaks and giving "
+                "your eyes some rest."
+            )
+        })
+
+    # Activity recommendation
+    if current_data.steps < baseline["steps"] * 0.8:
+        recommendations.append({
+            "metric": "activity",
+            "title": "A little movement can help",
+            "message": (
+                "Your activity is lower than your usual pattern. "
+                "If you feel comfortable, try a gentle walk "
+                "or some light movement today."
+            )
+        })
+
+    # Energy recommendation
+    if current_data.energy < baseline["energy"] * 0.8:
+        recommendations.append({
+            "metric": "energy",
+            "title": "Be gentle with yourself",
+            "message": (
+                "Your energy is lower than your usual level. "
+                "Take things at a comfortable pace and make "
+                "some time for rest."
+            )
+        })
+
+    return recommendations

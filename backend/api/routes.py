@@ -1,3 +1,4 @@
+
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
@@ -5,7 +6,11 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from backend.data.data_loader import load_wellness_data
-from backend.data.baseline import calculate_baseline, detect_deviations
+from backend.data.baseline import (
+    calculate_baseline,
+    detect_deviations
+)
+
 from voice.asha_voice_engine import speak_from_csv
 
 
@@ -41,11 +46,97 @@ class AskRequest(BaseModel):
 
 
 # ==========================================
+# PERSONALIZED RECOMMENDATION ENGINE
+# ==========================================
+
+def generate_recommendations(latest, baseline):
+
+    recommendations = []
+
+    if latest.sleep < baseline["sleep"] * 0.8:
+        recommendations.append({
+            "metric": "sleep",
+            "title": "Give yourself some rest",
+            "message": (
+                "I noticed your sleep was lower than your usual "
+                "pattern. Try winding down a little earlier tonight. "
+                "You deserve some good rest!"
+            )
+        })
+
+    if latest.water < baseline["water"] * 0.8:
+        recommendations.append({
+            "metric": "water",
+            "title": "Remember to hydrate",
+            "message": (
+                "Your water intake was lower than your usual level. "
+                "Keep some water nearby and drink regularly "
+                "throughout the day."
+            )
+        })
+
+    if latest.screen_time > baseline["screen_time"] * 1.2:
+        recommendations.append({
+            "metric": "screen_time",
+            "title": "Take a screen break",
+            "message": (
+                "Your screen time was higher than your usual pattern. "
+                "Consider taking a few short breaks today."
+            )
+        })
+
+    if latest.steps < baseline["steps"] * 0.8:
+        recommendations.append({
+            "metric": "activity",
+            "title": "Move at your own pace",
+            "message": (
+                "Your activity was lower than usual. If you feel "
+                "comfortable, try a gentle walk today."
+            )
+        })
+
+    if latest.energy < baseline["energy"] * 0.8:
+        recommendations.append({
+            "metric": "energy",
+            "title": "Be gentle with yourself",
+            "message": (
+                "Your energy was lower than usual. Take things "
+                "at a comfortable pace and allow yourself time to rest."
+            )
+        })
+
+    if latest.mood < baseline["mood"] * 0.8:
+        recommendations.append({
+            "metric": "mood",
+            "title": "Take a moment for yourself",
+            "message": (
+                "Your reported mood was lower than your usual pattern. "
+                "Consider taking a little time for something comforting "
+                "or talking with someone you trust."
+            )
+        })
+
+    if not recommendations:
+        recommendations.append({
+            "metric": "general",
+            "title": "Keep caring for yourself",
+            "message": (
+                "Your latest wellness records are relatively close "
+                "to your usual pattern. Keep taking small steps "
+                "to care for yourself!"
+            )
+        })
+
+    return recommendations
+
+
+# ==========================================
 # HEALTH CHECK
 # ==========================================
 
 @router.get("/health")
 def api_health():
+
     return {
         "status": "success",
         "message": "Asha API is running"
@@ -53,75 +144,91 @@ def api_health():
 
 
 # ==========================================
-# WELLNESS DASHBOARD ENDPOINT
+# WELLNESS DASHBOARD
 # ==========================================
 
 @router.get("/wellness/dashboard")
 def get_wellness_dashboard():
 
-    # Load and validate wellness records.
-    records = load_wellness_data(CSV_FILE)
+    try:
 
-    if not records:
-        raise HTTPException(
-            status_code=404,
-            detail="No valid wellness records found."
+        records = load_wellness_data(CSV_FILE)
+
+        if not records:
+            raise HTTPException(
+                status_code=404,
+                detail="No valid wellness records found."
+            )
+
+        baseline = calculate_baseline(records)
+
+        latest = max(
+            records,
+            key=lambda record: record.date
         )
 
-    # Calculate the user's average wellness values.
-    baseline = calculate_baseline(records)
+        deviations = detect_deviations(
+            latest,
+            baseline
+        )
 
-    # Get the most recent record.
-    latest = max(records, key=lambda record: record.date)
+        recommendations = generate_recommendations(
+            latest,
+            baseline
+        )
 
-    # Compare the latest record against the baseline.
-    deviations = detect_deviations(latest, baseline)
+        records_json = [
+            {
+                "date": record.date.isoformat(),
+                "sleep": record.sleep,
+                "steps": record.steps,
+                "screen_time": record.screen_time,
+                "mood": record.mood,
+                "energy": record.energy,
+                "water": record.water,
+                "exercise": record.exercise
+            }
+            for record in records
+        ]
 
-    # Convert WellnessData objects into JSON-friendly dictionaries.
-    records_json = [
-        {
-            "date": record.date.isoformat(),
-            "sleep": record.sleep,
-            "steps": record.steps,
-            "screen_time": record.screen_time,
-            "mood": record.mood,
-            "energy": record.energy,
-            "water": record.water,
-            "exercise": record.exercise
+        latest_json = {
+            "date": latest.date.isoformat(),
+            "sleep": latest.sleep,
+            "steps": latest.steps,
+            "screen_time": latest.screen_time,
+            "mood": latest.mood,
+            "energy": latest.energy,
+            "water": latest.water,
+            "exercise": latest.exercise
         }
-        for record in records
-    ]
 
-    latest_json = {
-        "date": latest.date.isoformat(),
-        "sleep": latest.sleep,
-        "steps": latest.steps,
-        "screen_time": latest.screen_time,
-        "mood": latest.mood,
-        "energy": latest.energy,
-        "water": latest.water,
-        "exercise": latest.exercise
-    }
+        return {
+            "status": "success",
+            "records": records_json,
+            "baseline": baseline,
+            "latest": latest_json,
+            "deviations": deviations,
+            "recommendations": recommendations
+        }
 
-    return {
-        "records": records_json,
-        "baseline": baseline,
-        "latest": latest_json,
-        "deviations": deviations
-    }
+    except HTTPException:
+        raise
+
+    except Exception as error:
+        print("Dashboard error:", error)
+
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to load wellness dashboard."
+        )
 
 
 # ==========================================
-# ASK ASHA ENDPOINT
+# ASK ASHA
 # ==========================================
 
 @router.post("/ask")
 def ask_asha(request: AskRequest):
-    """
-    Receives a user question,
-    generates Asha's response,
-    and optionally generates voice audio.
-    """
 
     try:
 
@@ -132,7 +239,7 @@ def ask_asha(request: AskRequest):
 
         audio_url = None
 
-        if result["audio_path"]:
+        if result.get("audio_path"):
 
             audio_filename = Path(
                 result["audio_path"]
@@ -156,6 +263,8 @@ def ask_asha(request: AskRequest):
 
     except Exception as error:
 
+        print("Ask Asha error:", error)
+
         raise HTTPException(
             status_code=500,
             detail="Unable to generate Asha's response. Please try again."
@@ -163,14 +272,11 @@ def ask_asha(request: AskRequest):
 
 
 # ==========================================
-# AUDIO PLAYBACK ENDPOINT
+# AUDIO PLAYBACK
 # ==========================================
 
 @router.get("/audio/{filename}")
 def get_asha_audio(filename: str):
-    """
-    Serves the generated MP3 file to the frontend.
-    """
 
     if (
         Path(filename).name != filename
